@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 function App() {
   const [length, setLength] = useState(8);
@@ -6,6 +6,8 @@ function App() {
   const [characterAllowed, setCharacterAllowed] = useState(false);
   const [password, setPassword] = useState('');
 
+
+  // useCallback is responsible for memoizing or caching the function.
   const passwordGenerator = useCallback(() => {
       let charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
       let password = '';
@@ -22,8 +24,19 @@ function App() {
   }, [length, numberAllowed, characterAllowed, setPassword]);
 
 
+  // useEffect is responsible for rerender the component when the state changes
+  useEffect(() => {
+    passwordGenerator();
+  }, [length, numberAllowed, characterAllowed, passwordGenerator]);
   
-
+  // useRef is responsible for storing the previous state
+  const passwordRef = useRef(null)
+  const copyPasswordToClipboard = useCallback(() => {
+    passwordRef.current?.select()
+    passwordRef.current?.setSelectionRange(0, 100)
+    // passwordRef.current?.clipboard.writeText(password)
+    window.navigator.clipboard.writeText(password)
+  },[password])
   return (
     <>
       <div className='w-full max-w-md mx-auto shadow-md rounded-lg px-4 py-8 text-orange-500 bg-gray-700 text-center'>
@@ -34,20 +47,43 @@ function App() {
             value={password}
             className='outline-none w-full px-3 py-1 bg-white'
             placeholder='password'
+            ref={passwordRef}
             readOnly
           />
           <button
             className='bg-blue-500 text-white p-2'
-            onClick={passwordGenerator}>
+            onClick={copyPasswordToClipboard}>
               Copy
           </button>
         </div>
         <div className='flex text-sm gap-x-2'>
           <div className="flex items-center gap-x-1">
-            <input type="range" name="" id="" />
+            <input 
+              type="range" 
+              min={8}
+              max={100} 
+              value={length}
+              onChange={(e) => setLength(e.target.value)}
+              className='cursor-pointer'
+            />
+            <label className='text-white'>Length ({length})</label>
           </div>
-          <label className='text-white'>Length</label>
-          
+          <div className="flex items-center gap-x-1">
+            <input 
+              type="checkbox" 
+              checked={numberAllowed}
+              onChange={(e) => setNumberAllowed(e.target.checked)} // toggle via event checked or not
+            />
+            <label className='text-white'>Number</label>
+          </div>
+          <div className="flex items-center gap-x-1">
+            <input 
+              type="checkbox" 
+              checked={characterAllowed}
+              onChange={() => setCharacterAllowed( (prev)=>!prev )} // toggle via previous state so there are 2 diffrent way to toggle show in the code 
+            />
+            <label className='text-white'>Spical Character</label>
+          </div>
         </div>
       </div>
     </>
